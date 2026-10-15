@@ -1,128 +1,98 @@
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models/reciter.dart';
 
-/// خدمة التلاوة الصوتية
-/// - تشغيل داخل التطبيق باستخدام just_audio
-/// - إمكانية تبديل القارئ أثناء التشغيل
-class AudioService {
-  static final AudioPlayer _player = AudioPlayer();
+class AudioService extends ChangeNotifier {
+  final AudioPlayer _player = AudioPlayer();
 
-  // القارئ والسورة الحاليين
-  static Reciter? _currentReciter;
-  static int _currentSurahNumber = 0;
-  static String _currentSurahName = '';
+  bool _isPlaying = false;
+  double _progress = 0.0;
+  String _currentReciterName = 'عبد الباسط عبد الصمد';
+  String _currentSurahName = 'سورة البقرة';
+  Reciter? _currentReciter;
+  int _currentSurahNumber = 1;
 
-  // ============================================================
-  // الوصول للحالة الحالية
-  // ============================================================
-  static Reciter? get currentReciter => _currentReciter;
-  static int get currentSurahNumber => _currentSurahNumber;
-  static String get currentSurahName => _currentSurahName;
+  bool get isPlaying => _isPlaying;
+  double get progress => _progress;
+  String get currentReciterName => _currentReciterName;
+  String get currentSurahName => _currentSurahName;
+  Reciter? get currentReciter => _currentReciter;
+  int get currentSurahNumber => _currentSurahNumber;
 
-  // ============================================================
-  // تشغيل سورة
-  // ============================================================
-  static Future<bool> playSurah(
-    Reciter reciter,
-    int surahNumber, {
-    String surahName = '',
-  }) async {
-    try {
-      final url = reciter.getAudioUrl(surahNumber);
+  AudioService() {
+    _player.playerStateStream.listen((state) {
+      _isPlaying = state.playing;
+      notifyListeners();
+    });
 
-      if (_currentReciter?.identifier == reciter.identifier &&
-          _currentSurahNumber == surahNumber &&
-          _player.audioSource != null) {
-        _player.play();
-        return true;
+    _player.positionStream.listen((pos) {
+      final total = _player.duration ?? Duration.zero;
+      if (total.inMilliseconds > 0) {
+        _progress = (pos.inMilliseconds / total.inMilliseconds).clamp(0.0, 1.0);
+        notifyListeners();
       }
+    });
+  }
 
-      await _player.stop();
-      await _player.setUrl(url);
+  Future<void> playSurah({required Reciter reciter, required int surahNumber, String? surahName}) async {
+    _currentReciter = reciter;
+    _currentReciterName = reciter.name;
+    _currentSurahNumber = surahNumber;
+    if (surahName != null) _currentSurahName = surahName;
 
-      _currentReciter = reciter;
-      _currentSurahNumber = surahNumber;
-      _currentSurahName = surahName;
+    final url = reciter.getAudioUrl(surahNumber);
+    await playAyahOrSurah(url, reciter: reciter.name, surah: surahName);
+  }
 
-      _player.play();
-      return true;
+  Future<void> playAyahOrSurah(String audioUrl, {String? reciter, String? surah}) async {
+    try {
+      if (reciter != null) _currentReciterName = reciter;
+      if (surah != null) _currentSurahName = surah;
+
+      await _player.setUrl(audioUrl);
+      await _player.play();
+      notifyListeners();
     } catch (e) {
-      return false;
+      debugPrint('Audio Playback Error: $e');
     }
   }
 
-  /// تغيير القارئ فقط (مع نفس السورة)
-  static Future<bool> changeReciter(Reciter reciter) async {
-    if (_currentSurahNumber == 0) return false;
-    return playSurah(
-      reciter,
-      _currentSurahNumber,
-      surahName: _currentSurahName,
-    );
-  }
-
-  // ============================================================
-  // التحكم الأساسي
-  // ============================================================
-  static Future<void> pause() async {
-    await _player.pause();
-  }
-
-  static Future<void> resume() async {
-    _player.play();
-  }
-
-  static Future<void> stop() async {
-    await _player.stop();
-    _currentReciter = null;
-    _currentSurahNumber = 0;
-    _currentSurahName = '';
-  }
-
-  static Future<void> seek(Duration position) async {
-    await _player.seek(position);
-  }
-
-  static Future<void> replay() async {
-    await _player.seek(Duration.zero);
-    _player.play();
-  }
-
-  // ============================================================
-  // الحالة
-  // ============================================================
-  static bool get isPlaying => _player.playing;
-  static Duration? get duration => _player.duration;
-  static Duration get position => _player.position;
-  static bool get hasAudio => _player.audioSource != null;
-
-  // ============================================================
-  // Streams للمراقبة
-  // ============================================================
-  static Stream<bool> get playingStream => _player.playingStream;
-  static Stream<Duration> get positionStream => _player.positionStream;
-  static Stream<Duration?> get durationStream => _player.durationStream;
-  static Stream<ProcessingState> get processingStateStream =>
-      _player.processingStateStream;
-
-  static AudioPlayer get player => _player;
-
-  // ============================================================
-  // أدوات مساعدة — محدّث ✅ (يدعم الساعات)
-  // ============================================================
-  static String formatDuration(Duration duration) {
-    final hours = duration.inHours;
-    final minutes =
-        duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds =
-        duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-    if (hours > 0) {
-      return '$hours:$minutes:$seconds';
+  Future<void> togglePlay() async {
+    if (_isPlaying) {
+      await _player.pause();
+    } else {
+      await _player.play();
     }
-    return '$minutes:$seconds';
+    notifyListeners();
   }
 
-  static Future<void> dispose() async {
-    await _player.dispose();
+  Future<void> seek(double relativeValue) async {
+    final total = _player.duration ?? Duration.zero;
+    final target = total * relativeValue;
+    await _player.seek(target);
+  }
+
+  Future<void> next() async {
+    if (_currentReciter != null && _currentSurahNumber < 114) {
+      await playSurah(
+        reciter: _currentReciter!,
+        surahNumber: _currentSurahNumber + 1,
+      );
+    }
+  }
+
+  Future<void> previous() async {
+    if (_currentReciter != null && _currentSurahNumber > 1) {
+      await playSurah(
+        reciter: _currentReciter!,
+        surahNumber: _currentSurahNumber - 1,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
   }
 }
