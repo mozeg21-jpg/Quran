@@ -4,7 +4,7 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: ">=3.3.0 <4.0.0"
 
 dependencies:
   flutter:
@@ -33,9 +33,9 @@ dependencies:
   adhan_dart: ^2.0.0
   flutter_compass: ^0.8.0
 
-  # أدوات إضافية ومشاركة النصوص
+  # الشبكة ومشاركة النصوص والتنسيق الزمني
   share_plus: ^10.0.2
-  intl: ^0.19.0
+  intl: ^0.20.3
   http: ^1.2.2
 
 dev_dependencies:
