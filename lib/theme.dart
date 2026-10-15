@@ -1,136 +1,47 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 
 class AppTheme {
-  static const Color seed = Color(0xFF16745B);
+  // الألوان الرئيسية مستخرجة ومطابقة لتصميم iOS الفاخر
+  static const Color primaryGreen = Color(0xFF0F3E36);
+  static const Color accentGold = Color(0xFFC5A358);
+  static const Color activeGreen = Color(0xFF1B5E51);
+  
+  // خلفيات الـ iOS الفاتحة والداكنة
+  static const Color lightBg = Color(0xFFF2F2F7);
+  static const Color lightCardBg = Color(0xFFFFFFFF);
+  static const Color lightSeparator = Color(0xFFC6C6C8);
+  
+  static const Color darkBg = Color(0xFF000000);
+  static const Color darkCardBg = Color(0xFF1C1C1E);
+  static const Color darkSeparator = Color(0xFF38383A);
 
-  static ThemeData get light => _build(Brightness.light);
-  static ThemeData get dark => _build(Brightness.dark);
-
-  static ThemeData _build(Brightness brightness) {
-    final scheme = ColorScheme.fromSeed(
-      seedColor: seed,
-      brightness: brightness,
-    );
-    return ThemeData(
-      useMaterial3: true,
-      brightness: brightness,
-      colorScheme: scheme,
-      scaffoldBackgroundColor: brightness == Brightness.light
-          ? const Color(0xFFF7F9F6)
-          : const Color(0xFF101512),
-      appBarTheme: const AppBarTheme(
-        elevation: 0,
-        scrolledUnderElevation: 0,
+  static CupertinoThemeData lightTheme = const CupertinoThemeData(
+    brightness: Brightness.light,
+    primaryColor: activeGreen,
+    barBackgroundColor: Color(0xCCF8F8F8),
+    scaffoldBackgroundColor: lightBg,
+    textTheme: CupertinoTextThemeData(
+      primaryColor: CupertinoColors.label,
+      textStyle: TextStyle(
+        fontFamily: 'SF Pro Text',
+        fontSize: 16,
+        color: CupertinoColors.black,
       ),
-      cardTheme: CardThemeData(
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(22)),
-        ),
+    ),
+  );
+
+  static CupertinoThemeData darkTheme = const CupertinoThemeData(
+    brightness: Brightness.dark,
+    primaryColor: accentGold,
+    barBackgroundColor: Color(0xCC1A1A1A),
+    scaffoldBackgroundColor: darkBg,
+    textTheme: CupertinoTextThemeData(
+      primaryColor: CupertinoColors.white,
+      textStyle: TextStyle(
+        fontFamily: 'SF Pro Text',
+        fontSize: 16,
+        color: CupertinoColors.white,
       ),
-      inputDecorationTheme: const InputDecorationTheme(
-        filled: true,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(18)),
-          borderSide: BorderSide.none,
-        ),
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        elevation: 0,
-        backgroundColor: brightness == Brightness.light
-            ? Colors.white
-            : const Color(0xFF161B22),
-      ),
-    );
-  }
-}
-
-class SoftCard extends StatelessWidget {
-  const SoftCard({
-    Key? key,
-    required this.child,
-    this.color,
-    this.padding = const EdgeInsets.all(20),
-  }) : super(key: key);
-
-  final Widget child;
-  final Color? color;
-  final EdgeInsetsGeometry padding;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: color ?? Theme.of(context).colorScheme.surface,
-      child: Padding(padding: padding, child: child),
-    );
-  }
-}
-
-class SectionHeader extends StatelessWidget {
-  const SectionHeader({
-    Key? key,
-    required this.title,
-    this.action,
-    this.onAction,
-  }) : super(key: key);
-
-  final String title;
-  final String? action;
-  final VoidCallback? onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Text(
-          title,
-          style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
-        ),
-        const Spacer(),
-        if (action != null)
-          TextButton(
-            onPressed: onAction,
-            child: Text(action!),
-          ),
-      ],
-    );
-  }
-}
-
-class QuickAction extends StatelessWidget {
-  const QuickAction({
-    Key? key,
-    required this.icon,
-    required this.title,
-    required this.color,
-    this.onTap,
-  }) : super(key: key);
-
-  final IconData icon;
-  final String title;
-  final Color color;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: SoftCard(
-        color: color,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Icon(icon, size: 28),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    ),
+  );
 }
