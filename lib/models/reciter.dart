@@ -1,43 +1,35 @@
 class Reciter {
-  final String identifier;
+  final String id;
   final String name;
-  final String englishName;
   final String server;
-  final String surahPath;
+  final String rewaya;
+  final int count;
 
-  const Reciter({
-    required this.identifier,
+  Reciter({
+    required this.id,
     required this.name,
-    required this.englishName,
     required this.server,
-    required this.surahPath,
+    required this.rewaya,
+    required this.count,
   });
-
-  /// يولّد رابط التلاوة لسورة محددة
-  /// مثال: https://server8.mp3quran.net/afs/001.mp3
-  String getAudioUrl(int surahNumber) {
-    final padded = surahNumber.toString().padLeft(3, '0');
-    if (surahPath.isNotEmpty) {
-      return '$server$surahPath$padded.mp3';
-    }
-    return '$server$padded.mp3';
-  }
 
   factory Reciter.fromJson(Map<String, dynamic> json) {
     return Reciter(
-      identifier: json['identifier'] as String? ?? '',
+      id: json['id']?.toString() ?? '',
       name: json['name'] as String? ?? '',
-      englishName: json['englishName'] as String? ?? '',
-      server: json['server'] as String? ?? '',
-      surahPath: json['surah_path'] as String? ?? '',
+      server: json['Server'] as String? ?? json['server'] as String? ?? '',
+      rewaya: json['rewaya'] as String? ?? 'حفص عن عاصم',
+      count: int.tryParse(json['count']?.toString() ?? '0') ?? 0,
     );
   }
 
-  Map<String, dynamic> toJson() => {
-        'identifier': identifier,
-        'name': name,
-        'englishName': englishName,
-        'server': server,
-        'surah_path': surahPath,
-      };
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'server': server,
+      'rewaya': rewaya,
+      'count': count,
+    };
+  }
 }
