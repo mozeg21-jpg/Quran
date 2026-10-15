@@ -61,8 +61,8 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
       );
 
       final coordinates = Coordinates(position.latitude, position.longitude);
-      final params = CalculationMethod.Egyptian();
-      params.madhab = Madhab.Shafi;
+      final params = CalculationMethod.egyptian();
+      params.madhab = Madhab.shafi;
 
       final pTimes = PrayerTimes(
         coordinates: coordinates,
@@ -91,9 +91,9 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   }
 
   void _useFallbackLocation() {
-    final coordinates = Coordinates(30.0444, 31.2357); // إحداثيات القاهرة
-    final params = CalculationMethod.Egyptian();
-    params.madhab = Madhab.Shafi;
+    final coordinates = Coordinates(30.0444, 31.2357);
+    final params = CalculationMethod.egyptian();
+    params.madhab = Madhab.shafi;
 
     final pTimes = PrayerTimes(
       coordinates: coordinates,
@@ -158,6 +158,14 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
         setState(() => _timeRemaining = '$hours:$minutes:$seconds');
       }
     }
+  }
+
+  Widget _buildSeparator() {
+    return Container(
+      height: 0.5,
+      margin: const EdgeInsets.only(left: 16),
+      color: CupertinoColors.separator,
+    );
   }
 
   @override
@@ -225,15 +233,15 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                       child: Column(
                         children: [
                           _buildPrayerRow(context, 'الفجر', _prayerTimes!.fajr, _nextPrayerName == 'الفجر'),
-                          const Divider(height: 1, indent: 16),
+                          _buildSeparator(),
                           _buildPrayerRow(context, 'الشروق', _prayerTimes!.sunrise, _nextPrayerName == 'الشروق'),
-                          const Divider(height: 1, indent: 16),
+                          _buildSeparator(),
                           _buildPrayerRow(context, 'الظهر', _prayerTimes!.dhuhr, _nextPrayerName == 'الظهر'),
-                          const Divider(height: 1, indent: 16),
+                          _buildSeparator(),
                           _buildPrayerRow(context, 'العصر', _prayerTimes!.asr, _nextPrayerName == 'العصر'),
-                          const Divider(height: 1, indent: 16),
+                          _buildSeparator(),
                           _buildPrayerRow(context, 'المغرب', _prayerTimes!.maghrib, _nextPrayerName == 'المغرب'),
-                          const Divider(height: 1, indent: 16),
+                          _buildSeparator(),
                           _buildPrayerRow(context, 'العشاء', _prayerTimes!.isha, _nextPrayerName == 'العشاء'),
                         ],
                       ),
