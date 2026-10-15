@@ -49,12 +49,12 @@ class _ReaderPageState extends State<ReaderPage> {
     );
   }
 
-  // وضع المصحف: محاكاة إطار صفحة المصحف الشريف الكلاسيكية
+  // وضع المصحف: إطار صفحة المصحف المتناسق مع فواصل مخصصة
   Widget _buildMushafPageView() {
     return Container(
       margin: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBF8E9), // لون الورق المصحفي
+        color: const Color(0xFFFBF8E9),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.accentGold, width: 3),
         boxShadow: const [
@@ -71,17 +71,17 @@ class _ReaderPageState extends State<ReaderPage> {
             const Padding(
               padding: EdgeInsets.all(8.0),
               child: Text(
-                'سورة البقرة — الجزء الأول',
+                'سورة الفاتحة — الجزء الأول',
                 style: TextStyle(color: CupertinoColors.black, fontSize: 13, fontWeight: FontWeight.bold),
               ),
             ),
-            const Divider(color: AppTheme.accentGold, height: 1),
+            Container(height: 1, color: AppTheme.accentGold),
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ﴿١﴾ الرَّحْمَٰنِ الرَّحِيمِ ﴿٢﴾ مَالِكِ يَوْمِ الدِّينِ ﴿٣﴾ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ﴿٤﴾ اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ ﴿٥﴾ صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ ﴿٦﴾',
+                    'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ﴿١﴾ الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ﴿٢﴾ الرَّحْمَٰنِ الرَّحِيمِ ﴿٣﴾ مَالِكِ يَوْمِ الدِّينِ ﴿٤﴾ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ﴿٥﴾ اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ ﴿٦﴾ صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ ﴿٧﴾',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Amiri',
@@ -93,7 +93,7 @@ class _ReaderPageState extends State<ReaderPage> {
                 ),
               ),
             ),
-            const Divider(color: AppTheme.accentGold, height: 1),
+            Container(height: 1, color: AppTheme.accentGold),
             const Padding(
               padding: EdgeInsets.all(8.0),
               child: Text('1', style: TextStyle(color: CupertinoColors.black, fontSize: 12)),
@@ -104,11 +104,21 @@ class _ReaderPageState extends State<ReaderPage> {
     );
   }
 
-  // وضع النص المرن: يتيح التفاعل مع كل آية (تفسير، نسخ، مشاركة، مفضلة)
+  // وضع النص المرن: عرض الآيات مع تفاعل التفسير والحفظ والمشاركة
   Widget _buildTextModeView() {
+    final List<String> ayahs = [
+      'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+      'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
+      'الرَّحْمَٰنِ الرَّحِيمِ',
+      'مَالِكِ يَوْمِ الدِّينِ',
+      'إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ',
+      'اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ',
+      'صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ',
+    ];
+
     return ListView.separated(
       padding: const EdgeInsets.all(16),
-      itemCount: 7,
+      itemCount: ayahs.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         return Container(
@@ -121,7 +131,7 @@ class _ReaderPageState extends State<ReaderPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ﴿${index + 1}﴾',
+                '${ayahs[index]} ﴿${index + 1}﴾',
                 style: TextStyle(fontFamily: 'Amiri', fontSize: _fontSize, height: 2.0),
               ),
               const SizedBox(height: 8),
@@ -182,9 +192,9 @@ class _ReaderPageState extends State<ReaderPage> {
     showCupertinoModalPopup(
       context: context,
       builder: (_) => CupertinoActionSheet(
-        title: Text('تفسير ابن كثير — الآية $ayahNum'),
+        title: Text('تفسير الميسر — الآية $ayahNum'),
         message: const Text(
-          'الْحَمْدُ لِلَّهِ: الشكر لله خالصاً دون سائر ما يُعبد من دونه، بما أنعم على عباده من النعم التي لا يحصيها عدد.',
+          'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ: الثناء على الله بصفاته التي كلّها أوصاف كمال، وبنعمه الظاهرة والباطنة، الدينية والدنيوية.',
           textAlign: TextAlign.right,
           style: TextStyle(fontSize: 15, height: 1.5),
         ),
