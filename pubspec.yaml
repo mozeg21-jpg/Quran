@@ -1,18 +1,50 @@
-name: uran
-description: تطبيق قرآن كريم - رفيقك اليومي مع كتاب الله
-publish_to: 'none'
+name: quran_app
+description: "A luxury iOS-styled Holy Quran application built with Flutter."
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: '>=2.17.0 <4.0.0'
+  sdk: ">=3.0.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.2.0
-  shared_preferences: ^2.2.2
-  url_launcher: ^6.2.4
-  just_audio: ^0.9.36
+  flutter_localizations:
+    sdk: flutter
+
+  # iOS Styling & Icons
+  cupertino_icons: ^1.0.8
+
+  # State Management & DI
+  provider: ^6.1.2
+
+  # Offline Storage
+  shared_preferences: ^2.3.2
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
+
+  # Audio Playback
+  just_audio: ^0.9.40
+  audio_session: ^0.1.21
+
+  # Location, Prayer Times & Compass
+  geolocator: ^13.0.1
+  geocoding: ^3.0.0
+  adhan: ^2.1.1 # لحساب مواقيت الصلاة بدقة فلكية معتمدة
+  flutter_compass: ^0.8.0
+
+  # Fonts & Sharing
+  share_plus: ^10.0.2
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
 
 flutter:
-  uses-material-design: true
+  uses-material-design: false # فرض وضع الواجهات غير المعتمدة على Material
+  assets:
+    - assets/quran/
+    - assets/adhkar/
+    - assets/images/
