@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:adhan/adhan.dart';
+import 'package:adhan_dart/adhan_dart.dart';
 import 'package:intl/intl.dart';
 import '../theme.dart';
 
@@ -17,7 +17,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   bool _isLoading = true;
   String _cityName = 'جارٍ التحديد...';
   PrayerTimes? _prayerTimes;
-  Prayer? _nextPrayer;
+  String _nextPrayerName = 'الفجر';
   Timer? _timer;
   String _timeRemaining = '';
 
@@ -37,8 +37,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   Future<void> _determinePositionAndCalculate() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      _showErrorDialog('خدمات الموقع معطلة', 'يرجى تفعيل الـ GPS من إعدادات الجهاز للحصول على المواقيت بدقة.');
-      setState(() => _isLoading = false);
+      _useFallbackLocation();
       return;
     }
 
@@ -62,15 +61,20 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
       );
 
       final coordinates = Coordinates(position.latitude, position.longitude);
-      final params = CalculationMethod.egyptian.getParameters();
-      params.madhab = Madhab.shafi;
+      final params = CalculationMethod.Egyptian();
+      params.madhab = Madhab.Shafi;
 
-      final pTimes = PrayerTimes.today(coordinates, params);
+      final pTimes = PrayerTimes(
+        coordinates: coordinates,
+        date: DateTime.now(),
+        calculationParameters: params,
+        precision: true,
+      );
 
       try {
         List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
         if (placemarks.isNotEmpty) {
-          _cityName = placemarks.first.locality ?? placemarks.first.country ?? 'موقعي الحالي';
+          _cityName = placemarks.first.locality ?? placemarks.first.administrativeArea ?? 'موقعي الحالي';
         }
       } catch (_) {
         _cityName = 'موقعي الحالي';
@@ -78,7 +82,6 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
 
       setState(() {
         _prayerTimes = pTimes;
-        _nextPrayer = pTimes.nextPrayer();
         _isLoading = false;
       });
       _updateRemainingTime();
@@ -88,15 +91,20 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   }
 
   void _useFallbackLocation() {
-    // إحداثيات افتراضية (القاهرة كمثال افتراضي عند رفض الإذن)
-    final coordinates = Coordinates(30.0444, 31.2357);
-    final params = CalculationMethod.egyptian.getParameters();
-    final pTimes = PrayerTimes.today(coordinates, params);
+    final coordinates = Coordinates(30.0444, 31.2357); // إحداثيات القاهرة
+    final params = CalculationMethod.Egyptian();
+    params.madhab = Madhab.Shafi;
+
+    final pTimes = PrayerTimes(
+      coordinates: coordinates,
+      date: DateTime.now(),
+      calculationParameters: params,
+      precision: true,
+    );
 
     setState(() {
       _cityName = 'القاهرة (افتراضي)';
       _prayerTimes = pTimes;
-      _nextPrayer = pTimes.nextPrayer();
       _isLoading = false;
     });
     _updateRemainingTime();
@@ -104,8 +112,41 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
 
   void _updateRemainingTime() {
     if (_prayerTimes == null) return;
-    final next = _prayerTimes!.nextPrayer();
-    final nextTime = _prayerTimes!.timeForPrayer(next);
+
+    final nextPrayerKey = _prayerTimes!.nextPrayer();
+    DateTime? nextTime;
+
+    switch (nextPrayerKey) {
+      case 'fajr':
+        _nextPrayerName = 'الفجر';
+        nextTime = _prayerTimes!.fajr;
+        break;
+      case 'sunrise':
+        _nextPrayerName = 'الشروق';
+        nextTime = _prayerTimes!.sunrise;
+        break;
+      case 'dhuhr':
+        _nextPrayerName = 'الظهر';
+        nextTime = _prayerTimes!.dhuhr;
+        break;
+      case 'asr':
+        _nextPrayerName = 'العصر';
+        nextTime = _prayerTimes!.asr;
+        break;
+      case 'maghrib':
+        _nextPrayerName = 'المغرب';
+        nextTime = _prayerTimes!.maghrib;
+        break;
+      case 'isha':
+        _nextPrayerName = 'العشاء';
+        nextTime = _prayerTimes!.isha;
+        break;
+      default:
+        _nextPrayerName = 'الفجر';
+        nextTime = _prayerTimes!.fajr?.add(const Duration(days: 1));
+        break;
+    }
+
     if (nextTime != null) {
       final diff = nextTime.difference(DateTime.now());
       if (diff.isNegative) {
@@ -116,41 +157,6 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
         final seconds = (diff.inSeconds % 60).toString().padLeft(2, '0');
         setState(() => _timeRemaining = '$hours:$minutes:$seconds');
       }
-    }
-  }
-
-  void _showErrorDialog(String title, String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (_) => CupertinoAlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text('حسناً'),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getPrayerArabicName(Prayer prayer) {
-    switch (prayer) {
-      case Prayer.fajr:
-        return 'الفجر';
-      case Prayer.sunrise:
-        return 'الشروق';
-      case Prayer.dhuhr:
-        return 'الظهر';
-      case Prayer.asr:
-        return 'العصر';
-      case Prayer.maghrib:
-        return 'المغرب';
-      case Prayer.isha:
-        return 'العشاء';
-      default:
-        return 'الفجر';
     }
   }
 
@@ -167,7 +173,6 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    // بطاقة الصلاة القادمة والموقع
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
@@ -195,7 +200,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                           ),
                           const SizedBox(height: 20),
                           Text(
-                            'الصلاة القادمة: ${_getPrayerArabicName(_nextPrayer ?? Prayer.fajr)}',
+                            'الصلاة القادمة: $_nextPrayerName',
                             style: const TextStyle(color: CupertinoColors.systemGrey4, fontSize: 14),
                           ),
                           const SizedBox(height: 8),
@@ -212,8 +217,6 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // جدول مواقيت الصلوات اليومية بتنسيق iOS Inset Grouped List
                     Container(
                       decoration: BoxDecoration(
                         color: CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context),
@@ -221,17 +224,17 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                       ),
                       child: Column(
                         children: [
-                          _buildPrayerRow(context, 'الفجر', _prayerTimes!.fajr, _nextPrayer == Prayer.fajr),
+                          _buildPrayerRow(context, 'الفجر', _prayerTimes!.fajr, _nextPrayerName == 'الفجر'),
                           const Divider(height: 1, indent: 16),
-                          _buildPrayerRow(context, 'الشروق', _prayerTimes!.sunrise, _nextPrayer == Prayer.sunrise),
+                          _buildPrayerRow(context, 'الشروق', _prayerTimes!.sunrise, _nextPrayerName == 'الشروق'),
                           const Divider(height: 1, indent: 16),
-                          _buildPrayerRow(context, 'الظهر', _prayerTimes!.dhuhr, _nextPrayer == Prayer.dhuhr),
+                          _buildPrayerRow(context, 'الظهر', _prayerTimes!.dhuhr, _nextPrayerName == 'الظهر'),
                           const Divider(height: 1, indent: 16),
-                          _buildPrayerRow(context, 'العصر', _prayerTimes!.asr, _nextPrayer == Prayer.asr),
+                          _buildPrayerRow(context, 'العصر', _prayerTimes!.asr, _nextPrayerName == 'العصر'),
                           const Divider(height: 1, indent: 16),
-                          _buildPrayerRow(context, 'المغرب', _prayerTimes!.maghrib, _nextPrayer == Prayer.maghrib),
+                          _buildPrayerRow(context, 'المغرب', _prayerTimes!.maghrib, _nextPrayerName == 'المغرب'),
                           const Divider(height: 1, indent: 16),
-                          _buildPrayerRow(context, 'العشاء', _prayerTimes!.isha, _nextPrayer == Prayer.isha),
+                          _buildPrayerRow(context, 'العشاء', _prayerTimes!.isha, _nextPrayerName == 'العشاء'),
                         ],
                       ),
                     ),
@@ -242,8 +245,8 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     );
   }
 
-  Widget _buildPrayerRow(BuildContext context, String name, DateTime time, bool isNext) {
-    final formattedTime = DateFormat.jm('ar_SA').format(time);
+  Widget _buildPrayerRow(BuildContext context, String name, DateTime? time, bool isNext) {
+    final formattedTime = time != null ? DateFormat.jm('ar_SA').format(time.toLocal()) : '--:--';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
